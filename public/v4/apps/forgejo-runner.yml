@@ -98,6 +98,25 @@ caproverOneClickApp:
             For security, only assign this runner to trusted repositories
             and users.
 
+            IMPORTANT: Once the runner is deployed, check if it has access to the
+            docker daemon.
+
+            If it does not have access, run the following command:
+
+                stat -c '%u:%g %a %n' /var/run/docker.sock
+
+            Which will return something like `0:998 660 /var/run/docker.sock`.
+            Take note of the `998` part of the output.
+
+            Go into your CapRover's Service Update Override in your runner config
+            and make sure the following code is at the top of the file. Do not edit
+            anything else in it.
+
+                TaskTemplate:
+                  ContainerSpec:
+                    Groups:
+                      - "998"
+
     displayName: Forgejo Runner
 
     isOfficial: false
