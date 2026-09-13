@@ -9,7 +9,7 @@ services:
             - /var/run/docker.sock:/var/run/docker.sock
 
         command: >-
-            sh ec '
+            sh -ec '
                 mkdir -p /data;
 
                 cat > /data/config.yml <<EOF
