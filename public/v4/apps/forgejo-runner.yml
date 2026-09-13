@@ -4,6 +4,8 @@ services:
     $$cap_appname:
         image: data.forgejo.org/forgejo/runner:$$cap_runner_version
 
+        user: '0:0'
+
         volumes:
             - $$cap_appname-data:/data
             - /var/run/docker.sock:/var/run/docker.sock
