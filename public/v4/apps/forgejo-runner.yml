@@ -101,7 +101,7 @@ caproverOneClickApp:
             IMPORTANT: Once the runner is deployed, check if it has access to the
             docker daemon.
 
-            If it does not have access, run the following command:
+            If it does not have access, run the following command on the host server:
 
                 stat -c '%u:%g %a %n' /var/run/docker.sock
 
