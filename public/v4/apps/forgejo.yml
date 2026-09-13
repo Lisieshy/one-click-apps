@@ -1,0 +1,133 @@
+captainVersion: 4
+
+services:
+    $$cap_appname-db:
+        image: postgres:$$cap_postgres_version
+
+        volumes:
+            - $$cap_appname-db-data:/var/lib/postgresql/data
+
+        environment:
+            POSTGRES_USER: $$cap_db_user
+            POSTGRES_PASSWORD: $$cap_db_password
+            POSTGRES_DB: $$cap_db_name
+
+        caproverExtra:
+            notExposeAsWebApp: 'true'
+
+    $$cap_appname:
+        image: codeberg.org/forgejo/forgejo:$$cap_forgejo_version
+
+        depends_on:
+            - $$cap_appname-db
+
+        volumes:
+            - $$cap_appname-data:/data
+            - /etc/localtime:/etc/localtime:ro
+
+        # Forgejo SSH is exposed on a configurable host port.
+        # The HTTP port does NOT need a ports mapping because
+        # CapRover proxies the container HTTP port below.
+        ports:
+            - '$$cap_ssh_port:22'
+
+        environment:
+            USER_UID: '1000'
+            USER_GID: '1000'
+
+            # PostgreSQL
+            FORGEJO__database__DB_TYPE: postgres
+            FORGEJO__database__HOST: srv-captain--$$cap_appname-db:5432
+            FORGEJO__database__NAME: $$cap_db_name
+            FORGEJO__database__USER: $$cap_db_user
+            FORGEJO__database__PASSWD: $$cap_db_password
+
+            # Forgejo / CapRover
+            FORGEJO__server__DOMAIN: $$cap_appname.$$cap_root_domain
+            FORGEJO__server__ROOT_URL: https://$$cap_appname.$$cap_root_domain/
+            FORGEJO__server__SSH_DOMAIN: $$cap_appname.$$cap_root_domain
+            FORGEJO__server__SSH_PORT: '$$cap_ssh_port'
+            FORGEJO__server__SSH_LISTEN_PORT: '22'
+
+        caproverExtra:
+            containerHttpPort: '3000'
+
+caproverOneClickApp:
+    variables:
+        - id: $$cap_forgejo_version
+          label: Forgejo Version
+          defaultValue: '16'
+          description: Check the Forgejo documentation for available version tags.
+          validRegex: /^([^\s^\/])+$/
+
+        - id: $$cap_postgres_version
+          label: PostgreSQL Version
+          defaultValue: '14'
+          description: Check the PostgreSQL Docker image for available version tags.
+          validRegex: /^([^\s^\/])+$/
+
+        - id: $$cap_db_name
+          label: Database Name
+          defaultValue: forgejo
+          validRegex: /^([a-zA-Z0-9_])+$/
+
+        - id: $$cap_db_user
+          label: Database User
+          defaultValue: forgejo
+          validRegex: /^([a-zA-Z0-9_])+$/
+
+        - id: $$cap_db_password
+          label: Database Password
+          defaultValue: $$cap_gen_random_hex(32)
+          description: A random password is generated automatically. Keep this value if you need to restore the PostgreSQL database.
+          validRegex: /^([a-zA-Z0-9]){16,}$/
+
+        - id: $$cap_ssh_port
+          label: SSH Port
+          defaultValue: '222'
+          description: Host port used for Git over SSH. Port 22 inside the container remains unchanged.
+          validRegex: /^([1-9][0-9]{1,4})$/
+
+    instructions:
+        start: |-
+            Forgejo is a self-hosted Git forge providing Git repositories,
+            issues, pull requests, wikis, releases, package registries and more.
+
+            This One-Click App deploys Forgejo 16 with a dedicated
+            PostgreSQL 14 database.
+
+            Persistent data is stored in two CapRover-managed volumes:
+            $$cap_appname-data for Forgejo and
+            $$cap_appname-db-data for PostgreSQL.
+
+            The Forgejo web interface listens internally on port 3000.
+            CapRover will proxy it through the application's HTTP settings.
+
+            Git over SSH is exposed on the configured SSH port.
+
+        end: |-
+            Forgejo has been deployed at:
+
+            https://$$cap_appname.$$cap_root_domain
+
+            Before opening Forgejo, enable HTTPS for the $$cap_appname
+            application in CapRover.
+
+            The Forgejo SSH endpoint is available on port $$cap_ssh_port.
+
+            For example:
+
+            git clone ssh://git@$$cap_appname.$$cap_root_domain:$$cap_ssh_port/user/repository.git
+
+            The PostgreSQL database is internal to the CapRover cluster and
+            is not exposed publicly.
+
+            Back up both $$cap_appname-data and $$cap_appname-db-data.
+
+    displayName: Forgejo
+
+    isOfficial: true
+
+    description: Forgejo is a self-hosted Git forge with repositories, issues, pull requests, wikis, releases and package registries.
+
+    documentation: https://forgejo.org/docs/v16.0/admin/installation/docker/
