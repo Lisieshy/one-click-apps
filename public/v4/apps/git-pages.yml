@@ -1,0 +1,63 @@
+captainVersion: 4
+
+services:
+    $$cap_appname:
+        image: codeberg.org/git-pages/git-pages:$$cap_git_pages_version
+
+        restart: always
+
+        environment:
+            PAGES_SERVER_PAGES: tcp/:3000
+
+            PAGES_WILDCARD: >-
+                [{"domain":"$$cap_pages_domain","clone-url":"$$cap_forgejo_url/<user>/<project>.git","index-repo":"pages","index-repo-branch":"pages","authorization":"forgejo"}]
+
+            PAGES_STORAGE_TYPE: fs
+            PAGES_STORAGE_FS_ROOT: /app/data
+
+            PAGES_LIMITS_ALLOWED_REPOSITORY_URL_PREFIXES: $$cap_forgejo_url/
+
+        volumes:
+            - $$cap_appname-data:/app/data
+
+        caproverExtra:
+            containerHttpPort: '3000'
+
+caproverOneClickApp:
+    variables:
+        - id: $$cap_git_pages_version
+          label: git-pages version
+          description: git-pages container image tag.
+          defaultValue: latest
+          validRegex: /^([a-zA-Z0-9._-]+)$/
+
+        - id: $$cap_forgejo_url
+          label: Forgejo URL
+          description: Base URL of your Forgejo instance, without a trailing slash.
+          defaultValue: https://git.domain.tld
+          validRegex: /^https:\/\/[a-zA-Z0-9.-]+$/
+
+        - id: $$cap_pages_domain
+          label: Pages domain
+          description: The base domain used for Pages sites. A wildcard DNS record for this domain must point to CapRover.
+          defaultValue: pages.domain.tld
+          validRegex: /^[a-zA-Z0-9.-]+$/
+
+    instructions:
+        start: >-
+            git-pages serves repositories from Forgejo using wildcard Pages URLs.
+
+            A repository such as https://git.domain.tld/alice/my-site.git
+            will be available at https://alice.pages.domain.tld/my-site/.
+
+        end: >-
+            Configure wildcard DNS for *.pages.domain.tld and configure the
+            wildcard domain and TLS certificate in CapRover.
+
+    displayName: git-pages
+
+    isOfficial: false
+
+    description: Static site hosting for Forgejo repositories using git-pages.
+
+    documentation: https://git-pages.org/running-a-server/
