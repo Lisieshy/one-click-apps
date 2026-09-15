@@ -10,7 +10,7 @@ services:
             PAGES_SERVER_PAGES: tcp/:3000
 
             PAGES_WILDCARD: >-
-                [{"domain":"$$cap_pages_domain","clone-url":"$$cap_forgejo_url/<user>/<project>.git","index-repo":"pages","index-repo-branch":"pages","authorization":"forgejo"}]
+                [{"Domain":"$$cap_pages_domain","CloneURL":"$$cap_forgejo_url/<user>/<project>.git","IndexRepo":"pages","IndexRepoBranch":"pages","Authorization":"forgejo"}]
 
             PAGES_STORAGE_TYPE: fs
             PAGES_STORAGE_FS_ROOT: /app/data
